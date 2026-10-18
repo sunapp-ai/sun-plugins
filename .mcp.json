@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "sun": {
+      "type": "http",
+      "url": "https://api.sunapp.ai/mcp"
+    }
+  }
+}

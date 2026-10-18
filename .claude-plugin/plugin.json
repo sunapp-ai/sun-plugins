@@ -1,0 +1,18 @@
+{
+  "name": "sun",
+  "displayName": "SUN",
+  "version": "1.1.0",
+  "description": "Generate podcasts, guided meditations, bedtime stories and original songs with SUN.",
+  "author": {
+    "name": "SUN",
+    "url": "https://sunapp.ai"
+  },
+  "homepage": "https://sunapp.ai",
+  "repository": "https://github.com/sunapp-ai/sun-plugins",
+  "license": "MIT",
+  "keywords": ["audio", "podcast", "meditation", "sleep", "stories", "music", "learning"],
+  "icon": "./assets/logo.png",
+  "supportUrl": "https://sunapp.ai/support",
+  "privacyPolicyUrl": "https://sunapp.ai/privacy",
+  "termsOfServiceUrl": "https://sunapp.ai/terms"
+}
