@@ -9,11 +9,13 @@ is already generating or wants the finished audio.
 1. Identify the `job_id`. If the conversation does not contain one, ask for it.
 2. Call `get_course_status`. It reports `PENDING`, `PROCESSING`, `SUCCESS`, or
    `ERROR`, and a `progress` value from 0 to 100 once available.
-3. While it is `PENDING` or `PROCESSING`, wait before checking again. Start at
-   about 5 seconds and back off toward 30 seconds; a 30-minute podcast typically
-   takes 60 to 300 seconds. Do not poll in a tight loop.
-4. Once it reaches `SUCCESS`, call `get_course` and report the name with its
-   `listen_url` as a clickable link. Describe the result by its `content_type`:
+3. While it is `PENDING` or `PROCESSING` and the user wants to wait, call
+   `wait_for_course` instead of polling yourself, and again each time it
+   returns `state: waiting`; a 30-minute podcast typically takes 60 to 300
+   seconds before its first audio.
+4. Once it reaches `SUCCESS` (or `wait_for_course` returns `state: playable`),
+   call `get_course` and report the name with its `listen_url` as a clickable
+   link. Describe the result by its `content_type`:
    - `course`: present the returned `lectures` as episodes with their audio
      links.
    - `meditation`: one guided session, even though it arrives in several parts.
@@ -21,8 +23,8 @@ is already generating or wants the finished audio.
    - `song`: share the `lyrics` when present; a song without lyrics is
      instrumental.
 5. If the user is impatient, call `get_course` with `include_partial` set to
-   `true` to surface parts that have already finished; the `listen_url` already
-   plays them.
+   `true` to surface parts that have already finished; its `listen_url` plays
+   them, and is null while nothing can play yet.
 
 Audio links expire after seven days. Say so when sharing them, and never treat
 an audio link as a durable identifier. `listen_url` does not expire.

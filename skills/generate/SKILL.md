@@ -47,15 +47,14 @@ same generate, poll and listen flow with the differences in their own sections:
    returned `job_id` and `course_id`, and immediately tell the user the job ID
    and that generation usually takes one to five minutes.
 5. Unless the user explicitly asks for an asynchronous handoff, wait for the
-   first playable lecture. Poll `get_course_status`, then call `get_course` with
-   `include_partial: true`. Start after about 5 seconds and back off toward 30
-   seconds. A lecture is playable only when its `audio_url` is non-null.
-6. Stop polling on `ERROR` or after five minutes. A timeout does not invalidate
-   the job: report its `job_id` and do not start another generation. If the job
-   reports `SUCCESS` before audio upload finishes, keep checking partial results
-   within the same five-minute limit.
-7. As soon as one lecture is playable, give the user the listening link below.
-   Do not wait for every lecture.
+   first playable audio in the same turn: call `wait_for_course` with the
+   `job_id`, and call it again each time it returns `state: waiting`. It waits
+   on SUN's side, so do not poll `get_course_status` or pause in between.
+6. On `state: failed`, report the error and stop. On `state: timed_out`, the
+   job is still valid: give its `job_id`, say it is still generating, offer to
+   check again, and do not start another generation.
+7. On `state: playable`, give the user the listening link below at once. Do
+   not wait for every lecture.
 
 ## Meditations
 
@@ -180,10 +179,10 @@ added. Do not generate until the user chooses.
 
 ## Listening link
 
-Every create, status and course result carries `listen_url`, the page where
-the user listens. Use it exactly as returned; do not build the URL yourself.
-Give it only once some audio is playable (an `audio_url` in `get_course`):
-before that the page cannot play yet.
+`listen_url` is the page where the user listens. It is set only once some
+audio can play (`wait_for_course` returns `state: playable`, or `get_course`
+returns an `audio_url`) and is null before that, because the page cannot play
+yet. Use it exactly as returned; never build the URL yourself.
 
 Present the name and `listen_url` as a normal clickable Markdown link. For a
 podcast or story, also state how many of the returned lectures currently have

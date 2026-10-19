@@ -1,6 +1,6 @@
 # SUN MCP tool contracts
 
-All fifteen tools require a connected SUN account. They return a text summary
+All sixteen tools require a connected SUN account. They return a text summary
 and the same data in `structuredContent`. Error results use this shape:
 
 ```json
@@ -77,7 +77,7 @@ Result:
   "status": "PENDING",
   "status_url": "/v1/public/courses/<job_id>/status",
   "result_url": "/v1/public/courses/<job_id>",
-  "listen_url": "https://sunapp.ai/item/<course_id>",
+  "listen_url": null,
   "billing": {
     "estimated_credits": 600,
     "estimated_minutes": 10,
@@ -98,9 +98,9 @@ charged. The tool's text already states the cost; pass it on as written.
 
 `files` is present only when attachments or `file_ids` were passed; an
 uploaded file is listed by its `file_id` alone. The result returns
-immediately. Preserve `job_id`; the other course tools use it as their
-identifier. `listen_url` is the page where the user listens; give it to them as
-it is rather than building a URL.
+immediately, before any audio exists. Preserve `job_id`; the other course tools
+use it as their identifier. Next, call `wait_for_course` with it. `listen_url` is
+null here because nothing can play yet; never build the URL yourself.
 
 Errors refused before anything is created (no credits used):
 
@@ -318,7 +318,7 @@ Result:
   "created_at": "ISO-8601 timestamp",
   "updated_at": "ISO-8601 timestamp | null",
   "progress": 42,
-  "listen_url": "https://sunapp.ai/item/<course_id> | null",
+  "listen_url": null,
   "error": {
     "message": "string",
     "retryable": false
@@ -327,7 +327,8 @@ Result:
 ```
 
 `progress` and `error` may be null until they are available. `listen_url` is
-null until the course exists.
+always null here: status alone does not say whether audio can play. To wait
+for the first playable audio, call `wait_for_course`.
 
 ## `get_course`
 
@@ -355,7 +356,7 @@ Result:
   "genesis_mode": "string",
   "session_kind": "meditation | null",
   "lyrics": "string | null",
-  "listen_url": "https://sunapp.ai/item/<course_id>",
+  "listen_url": "https://sunapp.ai/item/<course_id> | null",
   "lectures": [
     {
       "id": "string",
@@ -367,7 +368,6 @@ Result:
     }
   ],
   "generation": {
-    "cost_usd": 0.42,
     "completed_at": "ISO-8601 timestamp | null"
   },
   "intro": {
@@ -400,7 +400,43 @@ lecture image for it.
 it arrives in several lectures; a story's lectures are its chapters; a song is
 one lecture, and `lyrics` holds its words one line per row (null for an
 instrumental, or while they are still being written). `listen_url` plays
-whatever is ready and does not expire.
+whatever is ready and does not expire. It is null until some lecture or the
+intro has audio, since before that the page cannot play.
+
+## `wait_for_course`
+
+Waits on SUN's side until a generation (a course, meditation, story or song)
+has audio that can play.
+
+Input:
+
+- `job_id` (string, required): the job ID a create tool returned.
+
+Each call waits up to about 25 seconds, checking every 5 seconds, then returns
+one of four `state` values:
+
+| `state` | Meaning | What to do |
+| --- | --- | --- |
+| `playable` | Some audio can play. The result is `get_course`'s, with `listen_url` set, plus `state` and the job's `status`. | Share `listen_url` now; more may still be generating. |
+| `waiting` | Still generating, nothing can play yet. | Call `wait_for_course` again at once. |
+| `failed` | The job ended in `ERROR` with no media. `error.message` says why. | Report it and stop; do not retry without asking. |
+| `timed_out` | Five minutes have passed since the job started with nothing playable. | Give the `job_id`, say it is still generating, offer to check later. |
+
+Apart from `playable`, the result is:
+
+```json
+{
+  "job_id": "string",
+  "course_id": "string | null",
+  "state": "waiting | failed | timed_out",
+  "status": "PENDING | PROCESSING | SUCCESS | ERROR",
+  "progress": 42,
+  "listen_url": null
+}
+```
+
+A `failed` result also carries `error`. Called again later, `wait_for_course`
+still returns `playable` as soon as audio exists, however old the job is.
 
 ## `get_source_file_status`
 
