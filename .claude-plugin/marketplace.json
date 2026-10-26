@@ -1,0 +1,15 @@
+{
+  "name": "sun",
+  "description": "SUN's plugin for Claude: podcasts, guided meditations, bedtime stories and original songs.",
+  "owner": {
+    "name": "SUN",
+    "url": "https://sunapp.ai"
+  },
+  "plugins": [
+    {
+      "name": "sun",
+      "source": "./",
+      "description": "Generate podcasts, guided meditations, bedtime stories and original songs with SUN."
+    }
+  ]
+}
