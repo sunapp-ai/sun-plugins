@@ -6,7 +6,10 @@ description: Check the progress of a podcast, meditation, story or song generate
 Use this skill when someone asks about a podcast, meditation, story or song that
 is already generating or wants the finished audio.
 
-1. Identify the `job_id`. If the conversation does not contain one, ask for it.
+1. Find the `job_id` in the result of the create tool earlier in this
+   conversation. Never ask the user for it or show it to them: it is an
+   internal identifier they never see. If the conversation has none, say you
+   can only check a generation started in this conversation.
 2. Call `get_course_status`. It reports `PENDING`, `PROCESSING`, `SUCCESS`, or
    `ERROR`, and a `progress` value from 0 to 100 once available.
 3. While it is `PENDING` or `PROCESSING` and the user wants to wait, call

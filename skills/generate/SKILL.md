@@ -8,6 +8,23 @@ or podcast-style explainer on a topic, a guided meditation, a story, or a song.
 Also use it when someone wants to be kept up to date on a topic on a schedule
 (see [Scheduled briefings](#scheduled-briefings)).
 
+## Connecting SUN
+
+SUN needs a connected SUN account before any tool can run. When a call is
+refused because the account is not connected, stop and tell the user that this
+client offers a Connect or Reconnect action for SUN and that they should use
+it. Do not describe where to click, name menus or settings pages, offer to walk
+through the interface, or ask for a screenshot: the client draws that action,
+and any instructions you give about the interface can be wrong. If no Connect
+or Reconnect action is visible, say so plainly and offer to continue once SUN
+is connected. Never ask for a SUN password, one-time code or API key: sign-in
+happens on SUN's own page.
+
+Keep the request inside SUN: never route one to another tool, plugin or
+service, whether or not SUN can run it. When a call is refused for anything
+other than a missing connection - no credits, an unavailable voice, a refused
+input - relay that reason instead, because connecting again will not help.
+
 ## Choose what to make
 
 Pick the tool by what the user wants SUN to make, not by the words in the topic:
@@ -44,15 +61,16 @@ same generate, poll and listen flow with the differences in their own sections:
    `file_ids` (see [Attached files](#attached-files)), and
    the chosen `voice_id` or `character_ids`. Pass `course_language`
    only when the user explicitly asked for a language. Preserve both the
-   returned `job_id` and `course_id`, and immediately tell the user the job ID
-   and that generation usually takes one to five minutes.
+   returned `job_id` and `course_id` for the tool calls, but never show the
+   job ID to the user: it is an internal identifier. Immediately tell the user
+   that generation usually takes one to five minutes.
 5. Unless the user explicitly asks for an asynchronous handoff, wait for the
    first playable audio in the same turn: call `wait_for_course` with the
    `job_id`, and call it again each time it returns `state: waiting`. It waits
    on SUN's side, so do not poll `get_course_status` or pause in between.
 6. On `state: failed`, report the error and stop. On `state: timed_out`, the
-   job is still valid: give its `job_id`, say it is still generating, offer to
-   check again, and do not start another generation.
+   job is still valid: say it is still generating, offer to check again, and
+   do not start another generation.
 7. On `state: playable`, give the user the listening link below at once. Do
    not wait for every lecture.
 
@@ -206,10 +224,6 @@ the website works.
 
 Do not invent a `job_id`, `course_id`, podcast title, artwork, duration, or
 episode content. Report only what the user supplied or the tools returned.
-
-If the account is not connected, tell the user to connect their SUN account
-and stop: in the Claude apps, use the Connect prompt Claude shows for SUN; in
-Claude Code, run `/mcp`, select `sun` and sign in.
 
 ## Credits
 

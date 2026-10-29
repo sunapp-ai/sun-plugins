@@ -12,11 +12,14 @@ and the same data in `structuredContent`. Error results use this shape:
 }
 ```
 
-Authentication failures are tool errors rather than transport errors. The MCP
-response can still use HTTP 200 while `isError` is true and
-`_meta["mcp/www_authenticate"]` asks ChatGPT to connect the account. Every other
-error carries no `_meta`: it is not a reason to reconnect. Do not branch on HTTP
-status codes in a skill.
+An unauthenticated request is refused before any tool runs: HTTP 401 - 403 when
+the connection lacks the scope - carrying a `WWW-Authenticate` challenge, and
+the same challenge in the result's `_meta["mcp/www_authenticate"]`. If the
+refusal instead arrives as a tool error, that `_meta` is what prompts the
+connect. Either way the two carry the same challenge, and that is what makes the
+client offer to connect or reconnect the account. Every other error carries no
+`_meta`: it is not a reason to reconnect. Do not branch on HTTP status codes in
+a skill.
 
 | Tool                        | Scope             | Annotations                             |
 | --------------------------- | ----------------- | --------------------------------------- |
@@ -99,7 +102,7 @@ charged. The tool's text already states the cost; pass it on as written.
 `files` is present only when attachments or `file_ids` were passed; an
 uploaded file is listed by its `file_id` alone. The result returns
 immediately, before any audio exists. Preserve `job_id`; the other course tools
-use it as their identifier. Next, call `wait_for_course` with it. `listen_url` is
+use it as their identifier. It is internal: never show it to the user. Next, call `wait_for_course` with it. `listen_url` is
 null here because nothing can play yet; never build the URL yourself.
 
 Errors refused before anything is created (no credits used):
@@ -420,7 +423,7 @@ one of four `state` values:
 | `playable` | Some audio can play. The result is `get_course`'s, with `listen_url` set, plus `state` and the job's `status`. | Share `listen_url` now; more may still be generating. |
 | `waiting` | Still generating, nothing can play yet. | Call `wait_for_course` again at once. |
 | `failed` | The job ended in `ERROR` with no media. `error.message` says why. | Report it and stop; do not retry without asking. |
-| `timed_out` | Five minutes have passed since the job started with nothing playable. | Give the `job_id`, say it is still generating, offer to check later. |
+| `timed_out` | Five minutes have passed since the job started with nothing playable. | Say it is still generating and offer to check later. |
 
 Apart from `playable`, the result is:
 
@@ -454,20 +457,22 @@ user before they re-upload.
 
 ## `whoami`
 
-Confirms the connected account without using any credits. It takes no
-inputs.
+Returns the connected SUN account's profile without using any credits. It takes
+no inputs and is the account-profile tool ChatGPT uses to recognise the
+connection.
 
 Result:
 
 ```json
 {
-  "user_id": "string",
-  "token_id": "string"
+  "id": "string",
+  "email": "string"
 }
 ```
 
-Treat these identifiers as connectivity evidence. Do not repeat `token_id` in
-ordinary user-facing responses.
+`id` is the stable, opaque SUN account identifier. Use `email`, when present, to
+confirm the account; do not read the opaque ID aloud unless the user asks for
+it. `email` is omitted when SUN cannot read it. `token_id` is never returned.
 
 ## `get_credit_balance`
 
