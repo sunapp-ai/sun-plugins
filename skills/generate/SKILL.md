@@ -60,7 +60,8 @@ same generate, poll and listen flow with the differences in their own sections:
 4. Call `create_audio_course` with `prompt`, `duration_minutes`, any uploaded
    `file_ids` (see [Attached files](#attached-files)), and
    the chosen `voice_id` or `character_ids`. Pass `course_language`
-   only when the user explicitly asked for a language. Preserve both the
+   when the user asked for a language or wrote the request in one other than
+   English, rather than relying on SUN to detect it. Preserve both the
    returned `job_id` and `course_id` for the tool calls, but never show the
    job ID to the user: it is an internal identifier. Immediately tell the user
    that generation usually takes one to five minutes.
@@ -105,8 +106,8 @@ and detail (their child's name, friends, the animal, the place).
   `voice_id`. If the user has no cloned voice, say they can clone their voice in
   the SUN app (https://sunapp.ai) and offer one of SUN's voices; do not generate
   until they choose.
-- `course_language`: only when the user explicitly asks for a language; with a
-  voice it must match the voice's language.
+- `course_language`: when the user asks for a language or writes in one other
+  than English; with a voice it must match the voice's language.
 
 ## Songs
 

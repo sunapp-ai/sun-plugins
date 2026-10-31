@@ -67,9 +67,15 @@ Inputs:
 - `character_ids` (array of 1 to 2 unique strings, optional): ids from
   `list_characters`. One narrates alone; two share every lecture and the first
   leads. Cannot be combined with `voice_id`.
-- `course_language` (`en` | `es` | `hi` | `zh`, optional): pass only when the
-  user explicitly asks for a language. With a voice it must match the voice's
-  language; a character's own language never sets it.
+- `course_language` (string, optional): one of `en` (English), `es`
+  (Spanish), `fr` (French), `de` (German), `it` (Italian), `nl` (Dutch), `pt`
+  (Portuguese), `ru` (Russian), `uk` (Ukrainian), `zh` (Mandarin Chinese), `hi`
+  (Hindi), `ar` (Modern Standard Arabic), `ar-sa` (Saudi Arabic), `ar-ae`
+  (Emirati Arabic), `ar-eg` (Egyptian Arabic), `ar-sy` (Syrian Arabic) or
+  `ar-ma` (Moroccan Arabic). Pass it when the user asks for a language or
+  writes the request in one other than English, rather than relying on SUN to
+  detect it. With a voice it must match the voice's language; a character's own
+  language never sets it.
 
 Result:
 
@@ -98,6 +104,10 @@ generation costs nothing: `waived_reason` is `first_generation` for the
 account's free first generation, or `exempt` for an account that is never
 charged. The tool's text already states the cost; pass it on as written.
 `billing` can be null, in which case say nothing about cost.
+
+`language_note` is present only when the requested `course_language` is not
+officially supported yet: SUN still generates in that language with a universal
+voice. The tool's text already includes the sentence; pass it on as written.
 
 `files` is present only when attachments or `file_ids` were passed; an
 uploaded file is listed by its `file_id` alone. The result returns
@@ -154,9 +164,8 @@ Inputs:
 - `voice_id` (string, optional): a `voice_id` from `list_voices`. Meditations use
   SUN's calm meditation voices and keep a chosen voice only for some of the
   user's own cloned voices.
-- `course_language` (`en` | `es` | `hi` | `zh`, optional): only when the user
-  explicitly asks for a language; with a voice it must match the voice's
-  language.
+- `course_language` (string, optional): as for `create_audio_course`; with a
+  voice it must match the voice's language.
 
 Result: as for `create_audio_course` (without `files`), plus
 `content_type: "meditation"` and, when the chosen voice was replaced,
@@ -179,8 +188,8 @@ Inputs:
 - `duration_minutes` (integer, optional): 5 to 30; defaults to 10.
 - `voice_id` (string, optional): a `voice_id` from `list_voices`, including the
   user's cloned voices (`kind: "cloned"`).
-- `course_language` (`en` | `es` | `hi` | `zh`, optional): as for
-  `create_meditation`.
+- `course_language` (string, optional): as for `create_audio_course`; with a
+  voice it must match the voice's language.
 
 A story is never told by characters; there is no `character_ids` input. When
 the user asks for their own voice and has no cloned voice, tell them they can
@@ -505,8 +514,9 @@ the user's own cloned voices (never other users' voices).
 
 Input:
 
-- `language` (`en` | `es` | `hi` | `zh`, optional): only voices that speak that
-  course language.
+- `language` (string, optional): a `course_language` code (see
+  `create_audio_course`); only voices that speak that course language. Only the
+  languages SUN currently offers have voices, so go by what this returns.
 
 Result:
 
@@ -517,7 +527,7 @@ Result:
       "voice_id": "string",
       "display_name": "string",
       "kind": "preset | cloned",
-      "language": "en | es | hi | zh | null",
+      "language": "<course_language code> | null",
       "language_code": "en-GB",
       "gender": "male | female | nonbinary | null",
       "trait": "string | null",
